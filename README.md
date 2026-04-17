@@ -1,210 +1,209 @@
-# 🤖 AI Study Hub — Doubt Solver & Notes Generator
+# AI Study Hub
 
-A full-stack AI-powered study tool with three core features:
-- **💬 AI Doubt Solver** — Conversational Q&A with GPT, full history
-- **📄 Notes Generator** — Upload PDF → extract text → AI structured notes → download
-- **🎯 Quiz Generator** — Generate interactive MCQs from any topic or PDF, with timer & scoring
+AI Study Hub is a full-stack study assistant with three main features:
 
----
+- AI Doubt Solver for question-answering
+- Notes Generator for turning PDF content into study notes
+- Quiz Generator for creating MCQs from a topic or extracted text
 
-## 🏗 Tech Stack
+The frontend is built with React and Vite, and the backend is built with Node.js and Express. AI responses are powered by Groq.
 
-| Layer      | Technology                              |
-|------------|-----------------------------------------|
-| Frontend   | React 18, Vite, Tailwind CSS, React Router |
-| Backend    | Node.js, Express, REST API             |
-| AI         | OpenAI GPT-3.5-Turbo                   |
-| Database   | MongoDB (Mongoose)                     |
-| File Parse | pdf-parse, multer                      |
+## Tech Stack
 
----
+- Frontend: React, Vite, Tailwind CSS, React Router
+- Backend: Node.js, Express
+- AI Provider: Groq
+- Database: SQLite with Sequelize
+- File Processing: `multer`, `pdf-parse`
 
-## 📁 Project Structure
+## Project Structure
 
-```
-ai-doubt-solver/
-├── package.json             ← root (concurrently runner)
-│
-├── server/
-│   ├── index.js             ← Express entry point
-│   ├── .env.example         ← Copy to .env and fill values
-│   ├── routes/
-│   │   ├── ask.js           ← POST /api/ask
-│   │   ├── upload.js        ← POST /api/upload
-│   │   ├── notes.js         ← POST /api/notes
-│   │   ├── quiz.js          ← POST /api/quiz
-│   │   └── history.js       ← GET  /api/history/:sessionId
-│   ├── controllers/
-│   │   ├── askController.js
-│   │   ├── uploadController.js
-│   │   ├── notesController.js
-│   │   └── quizController.js
-│   ├── services/
-│   │   ├── openaiService.js ← All GPT prompt engineering
-│   │   └── pdfService.js    ← PDF text extraction
-│   └── models/
-│       ├── Conversation.js
-│       ├── Note.js
-│       └── Quiz.js
-│
-└── client/
-    ├── index.html
-    ├── vite.config.js       ← Proxy /api → localhost:5000
-    ├── tailwind.config.js
-    └── src/
-        ├── App.jsx           ← Router + ThemeContext + SessionContext
-        ├── index.css         ← Global styles + CSS variables
-        ├── main.jsx
-        ├── components/
-        │   ├── Navbar.jsx
-        │   ├── ChatUI.jsx
-        │   ├── FileUpload.jsx
-        │   ├── QuizUI.jsx
-        │   └── LoadingSpinner.jsx
-        ├── pages/
-        │   ├── Home.jsx
-        │   ├── DoubtSolver.jsx
-        │   ├── NotesGenerator.jsx
-        │   └── QuizPage.jsx
-        └── services/
-            └── api.js        ← All axios API calls
+```text
+claude-project/
+|-- package.json
+|-- client/
+|   |-- package.json
+|   |-- vite.config.js
+|   `-- src/
+`-- server/
+    |-- package.json
+    |-- index.js
+    |-- db.js
+    |-- .env.example
+    |-- controllers/
+    |-- models/
+    |-- routes/
+    `-- services/
 ```
 
----
+## Prerequisites
 
-## ⚙️ Prerequisites
+Before running the project, make sure you have:
 
-- **Node.js** v18 or higher — [nodejs.org](https://nodejs.org)
-- **npm** v9 or higher
-- **OpenAI API Key** — [platform.openai.com](https://platform.openai.com/api-keys)
-- **MongoDB** — [MongoDB Atlas (free)](https://www.mongodb.com/atlas) or local install
+- Node.js 18 or later
+- npm
+- A valid Groq API key
 
----
+## How To Run This Project
 
-## 🚀 Setup Instructions
+If someone clones this project fresh, this is the easiest way to run it.
 
-### 1. Clone / Download the project
+### 1. Clone the repository
 
 ```bash
-cd ai-doubt-solver
+git clone <your-repo-url>
+cd claude-project
 ```
 
-### 2. Create the `.env` file for the backend
+### 2. Install root dependencies
 
 ```bash
-cp server/.env.example server/.env
+npm install
 ```
 
-Edit `server/.env`:
+### 3. Install backend dependencies
+
+```bash
+cd server
+npm install
+```
+
+### 4. Install frontend dependencies
+
+```bash
+cd ../client
+npm install
+```
+
+### 5. Create the backend environment file
+
+Inside the `server` folder, create a `.env` file.
+
+You can copy the values from `.env.example`.
+
+Example:
 
 ```env
-OPENAI_API_KEY=sk-your-actual-openai-key-here
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/ai-doubt-solver
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.1-8b-instant
+MONGO_URI=mongodb://localhost:27017/ai-doubt-solver
 PORT=5000
 ```
 
-> **MongoDB Atlas (free tier):**
-> 1. Go to [mongodb.com/atlas](https://www.mongodb.com/atlas)
-> 2. Create a free cluster
-> 3. Click Connect → Drivers → copy the connection string
-> 4. Replace `<password>` with your DB user password
->
-> **Local MongoDB:**
-> ```env
-> MONGO_URI=mongodb://localhost:27017/ai-doubt-solver
-> ```
-> MongoDB is **optional** — the app works without it, just without history.
+Notes:
 
-### 3. Install all dependencies
+- `GROQ_API_KEY` is required for AI features.
+- `GROQ_MODEL` can stay as `llama-3.1-8b-instant`.
+- `MONGO_URI` is currently not important for the main app flow because the project is using SQLite through Sequelize.
+- `PORT=5000` is the backend port.
 
-```bash
-# From the root folder:
-npm run install:all
+### 6. Start the backend
 
-# Or manually:
-npm install
-cd server && npm install
-cd ../client && npm install
-```
+Open a terminal and run:
 
----
-
-## ▶️ Running Locally
-
-### Option A — Run both together (recommended)
-
-```bash
-# From root:
-npm run dev
-```
-
-This starts:
-- Backend at `http://localhost:5000`
-- Frontend at `http://localhost:5173`
-
-### Option B — Run separately
-
-**Terminal 1 (backend):**
 ```bash
 cd server
 npm run dev
 ```
 
-**Terminal 2 (frontend):**
+### 7. Start the frontend
+
+Open a second terminal and run:
+
 ```bash
 cd client
 npm run dev
 ```
 
-Then open: **[http://localhost:5173](http://localhost:5173)**
+### 8. Open the app in the browser
 
----
+```text
+http://localhost:5173
+```
 
-## 🔌 API Endpoints
+The frontend talks to the backend at:
 
-| Method | Route                         | Description              |
-|--------|-------------------------------|--------------------------|
-| GET    | `/api/health`                 | Server health check      |
-| POST   | `/api/ask`                    | Ask AI a question        |
-| GET    | `/api/ask/history/:sessionId` | Load conversation history|
-| POST   | `/api/upload`                 | Upload & extract PDF text|
-| POST   | `/api/notes`                  | Generate notes from text |
-| GET    | `/api/notes/history/:session` | Load notes history       |
-| POST   | `/api/quiz`                   | Generate MCQ quiz        |
-| POST   | `/api/quiz/result`            | Save quiz score          |
-| GET    | `/api/quiz/history/:session`  | Load quiz history        |
-| GET    | `/api/history/:sessionId`     | All history aggregated   |
+```text
+http://localhost:5000
+```
 
----
+## Quick Checks
 
-## 🌟 Features
+### Backend health check
 
-- ✅ AI-powered chat with GPT-3.5 (full conversation context)
-- ✅ PDF upload with text extraction (up to 10MB)
-- ✅ AI-structured notes in markdown (headings + bullets)
-- ✅ Download notes as `.txt` file
-- ✅ Interactive MCQ quiz with 4 options per question
-- ✅ Live countdown timer per quiz
-- ✅ Score breakdown with explanations
-- ✅ Dark/light mode toggle
-- ✅ Per-device session ID (localStorage)
-- ✅ MongoDB history (gracefully optional)
-- ✅ Responsive design (mobile-friendly)
+Open:
 
----
+```text
+http://localhost:5000/api/health
+```
 
-## 🐞 Troubleshooting
+You should see:
 
-| Problem | Fix |
-|---------|-----|
-| `OPENAI_API_KEY not set` | Add key to `server/.env` |
-| `Cannot connect to server` | Start backend with `cd server && npm run dev` |
-| `Invalid PDF` | Ensure file is not password-protected or image-only |
-| MongoDB errors | Check `MONGO_URI` or leave blank to run without DB |
-| Port 5000 in use | Change `PORT=5001` in `.env` and update `vite.config.js` proxy |
+```json
+{"status":"OK","message":"AI Doubt Solver API is running"}
+```
 
----
+### Test the app
 
-## 📜 License
+- Open the AI Doubt Solver page
+- Ask a question
+- Upload a PDF to test notes generation
+- Generate a quiz from a topic or extracted text
 
-MIT — free to use and modify.
+## Available Scripts
+
+From the project root:
+
+- `npm run dev` starts frontend and backend together
+- `npm run build` builds the frontend
+
+From the `server` folder:
+
+- `npm run dev` starts the backend with nodemon
+- `npm start` starts the backend normally
+
+From the `client` folder:
+
+- `npm run dev` starts the Vite dev server
+- `npm run build` creates a production build
+
+## API Endpoints
+
+- `GET /api/health` - health check
+- `POST /api/ask` - ask the AI a question
+- `GET /api/ask/history/:sessionId` - fetch conversation history
+- `POST /api/upload` - upload and extract text from a PDF
+- `POST /api/notes` - generate study notes
+- `GET /api/notes/history/:sessionId` - fetch notes history
+- `POST /api/quiz` - generate a quiz
+- `POST /api/quiz/result` - save quiz results
+- `GET /api/quiz/history/:sessionId` - fetch quiz history
+- `GET /api/history/:sessionId` - fetch combined history
+
+## Common Problems
+
+### Groq API quota exceeded
+
+Use a valid Groq key with available quota or billing.
+
+### Invalid Groq API key
+
+Check `GROQ_API_KEY` in `server/.env`.
+
+### Port already in use
+
+If you see `EADDRINUSE`, port `5000` or `5173` is already being used by another process. Stop that process or change the port.
+
+### Frontend loads but API fails
+
+Make sure the backend is running on port `5000`.
+
+### PDF does not work
+
+Make sure the uploaded file is a valid PDF and not password-protected.
+
+## Important Note
+
+Do not commit your real API key to GitHub. Keep it only in `server/.env`.
+
+If a key is ever shared accidentally, rotate it immediately in your Groq dashboard.
