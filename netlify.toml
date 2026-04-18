@@ -1,0 +1,14 @@
+# Netlify build settings for this repo
+# Option A (recommended): set base to the `client` folder and publish the Vite output `dist` folder
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm run build"
+
+# Option B (alternate): if you prefer keeping base empty, publish path would be "client/dist"
+# [build]
+#   publish = "client/dist"
+#   command = "npm run build"
+
+# NOTE: You can also set environment variables under [context.production.environment]
+# but do NOT put secrets (DB URIs, private API keys) into this file in a public repo.
