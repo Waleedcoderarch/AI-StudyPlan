@@ -7,31 +7,28 @@ function MessageBubble({ msg, index }) {
   const isUser = msg.role === 'user'
   return (
     <div
-      className={`flex gap-3 animate-slide-up ${isUser ? 'flex-row-reverse' : ''}`}
-      style={{ animationDelay: `${index * 30}ms` }}
+      className={`flex gap-3 msg-enter ${isUser ? 'flex-row-reverse' : ''}`}
+      style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
     >
-      {/* Avatar */}
       <div
-        className={`w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center text-sm font-bold shadow-md ${
-          isUser
-            ? 'bg-gradient-to-br from-sky-500 to-violet-600 text-white'
-            : 'bg-gradient-to-br from-emerald-400 to-sky-500 text-white'
-        }`}
+        className="w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-md"
+        style={{
+          background: isUser
+            ? 'linear-gradient(145deg,#0f6f5c,#1faa8a)'
+            : 'linear-gradient(145deg,#1a3348,#c9783a)',
+        }}
       >
-        {isUser ? '✦' : '🤖'}
+        {isUser ? 'YOU' : 'AI'}
       </div>
 
-      {/* Bubble */}
       <div className={`max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
         <div
           className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${
-            isUser
-              ? 'rounded-tr-sm text-white'
-              : 'rounded-tl-sm'
+            isUser ? 'rounded-tr-sm text-white' : 'rounded-tl-sm'
           }`}
           style={
             isUser
-              ? { background: 'linear-gradient(135deg,#0ea5e9,#8b5cf6)', color: '#fff' }
+              ? { background: 'linear-gradient(135deg,#0f6f5c,#1faa8a)', color: '#fff' }
               : { background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }
           }
         >

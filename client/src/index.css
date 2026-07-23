@@ -81,9 +81,19 @@ body {
   .glass-input::placeholder { color: var(--text-muted); }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-300;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-300 relative overflow-hidden;
     background: linear-gradient(135deg, var(--accent-deep), var(--accent));
     box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.28) 50%, transparent 65%);
+    background-size: 220% 100%;
+    animation: sheen 2.8s ease-in-out infinite;
+    pointer-events: none;
   }
 
   .btn-primary:hover:not(:disabled) {
@@ -199,7 +209,45 @@ body {
 
 .page-enter { animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+.msg-enter {
+  animation: msgIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.nav-enter {
+  animation: navDrop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  animation: statusPulse 1.8s ease-out infinite;
+}
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes navDrop {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes statusPulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes sheen {
+  0% { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
 }

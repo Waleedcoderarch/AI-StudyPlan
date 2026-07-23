@@ -26,67 +26,70 @@ const TOOLS = [
   },
 ]
 
-function HeroScene() {
+function HeroScene({ pointer }) {
+  const depthX = pointer.x * 12
+  const depthY = pointer.y * 10
+
   return (
     <div className="scene-3d relative h-[340px] sm:h-[420px] lg:h-[520px] w-full" aria-hidden="true">
-      <div className="absolute inset-0 flex items-center justify-center">
-        {/* Orbit ring */}
+      <div
+        className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
+        style={{ transform: `rotateX(${-pointer.y * 4}deg) rotateY(${pointer.x * 6}deg)` }}
+      >
+        <div className="absolute w-[86%] max-w-[500px] aspect-square rounded-full border border-dashed border-[color:var(--border)] opacity-40 animate-orbit-rev" />
         <div className="absolute w-[78%] max-w-[460px] aspect-square rounded-full border border-[color:var(--border)] opacity-60 animate-orbit" />
 
-        {/* Back plane */}
         <div
           className="plane-3d absolute w-[72%] max-w-[420px] aspect-[4/3] rounded-[28px] animate-float-slow"
           style={{
             background: 'linear-gradient(145deg, #122334 0%, #1a3348 55%, #0f6f5c 140%)',
             boxShadow: '0 40px 80px rgba(7,16,24,0.35)',
-            transform: 'rotateX(18deg) rotateY(-22deg) translateZ(-40px)',
+            transform: `rotateX(18deg) rotateY(-22deg) translateZ(-40px) translate(${depthX * -0.4}px, ${depthY * -0.3}px)`,
           }}
         >
-          <div className="absolute inset-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
-            <div className="h-2 w-24 rounded bg-white/25 mb-4" />
+          <div className="absolute inset-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 overflow-hidden">
+            <div className="h-2 w-24 rounded bg-white/25 mb-4 animate-soft-blink" />
             <div className="space-y-2">
-              <div className="h-2 w-full rounded bg-white/15" />
-              <div className="h-2 w-5/6 rounded bg-white/15" />
-              <div className="h-2 w-4/6 rounded bg-white/15" />
+              <div className="h-2 w-full rounded bg-white/15 origin-left animate-pulse-line" />
+              <div className="h-2 w-5/6 rounded bg-white/15 origin-left animate-pulse-line" style={{ animationDelay: '0.25s' }} />
+              <div className="h-2 w-4/6 rounded bg-white/15 origin-left animate-pulse-line" style={{ animationDelay: '0.5s' }} />
             </div>
             <div className="mt-8 grid grid-cols-3 gap-2">
-              <div className="h-14 rounded-xl bg-[#1faa8a]/35" />
-              <div className="h-14 rounded-xl bg-[#c9783a]/30" />
-              <div className="h-14 rounded-xl bg-white/10" />
+              <div className="h-14 rounded-xl bg-[#1faa8a]/35 transition-transform duration-500" style={{ transform: `translateY(${pointer.y * -6}px)` }} />
+              <div className="h-14 rounded-xl bg-[#c9783a]/30 transition-transform duration-500" style={{ transform: `translateY(${pointer.y * 4}px)` }} />
+              <div className="h-14 rounded-xl bg-white/10 transition-transform duration-500" style={{ transform: `translateY(${pointer.x * 5}px)` }} />
             </div>
           </div>
         </div>
 
-        {/* Front floating sheet */}
         <div
           className="plane-3d absolute w-[58%] max-w-[320px] aspect-[3/4] rounded-[22px] animate-float-mid"
           style={{
             background: 'linear-gradient(160deg, #fffdf9, #efeae2)',
             boxShadow: '0 30px 70px rgba(11,23,36,0.22)',
-            transform: 'rotateX(10deg) rotateY(16deg) translateZ(60px)',
             right: '8%',
             top: '12%',
+            transform: `rotateX(10deg) rotateY(16deg) translateZ(60px) translate(${depthX * 0.55}px, ${depthY * 0.4}px)`,
           }}
         >
           <div className="p-5 h-full flex flex-col">
             <div className="text-[10px] tracking-[0.25em] uppercase text-[#5b6b7c] font-semibold">Session</div>
             <div className="mt-3 font-display text-2xl text-[#0b1724] leading-tight">Study plane</div>
             <div className="mt-auto space-y-2">
-              <div className="h-2 rounded bg-[#1faa8a]/25 w-full" />
-              <div className="h-2 rounded bg-[#1faa8a]/20 w-4/5" />
-              <div className="h-2 rounded bg-[#c9783a]/25 w-3/5" />
+              <div className="h-2 rounded bg-[#1faa8a]/25 w-full origin-left animate-pulse-line" />
+              <div className="h-2 rounded bg-[#1faa8a]/20 w-4/5 origin-left animate-pulse-line" style={{ animationDelay: '0.2s' }} />
+              <div className="h-2 rounded bg-[#c9783a]/25 w-3/5 origin-left animate-pulse-line" style={{ animationDelay: '0.4s' }} />
             </div>
           </div>
         </div>
 
-        {/* Accent chip */}
         <div
           className="absolute left-[8%] bottom-[18%] rounded-2xl px-4 py-3 text-sm font-semibold text-white animate-rise"
           style={{
             background: 'linear-gradient(135deg, #0f6f5c, #1faa8a)',
             boxShadow: '0 18px 40px rgba(31,170,138,0.35)',
-            transform: 'rotateX(8deg) rotateY(-8deg)',
             animationDelay: '0.35s',
+            transform: `rotateX(8deg) rotateY(-8deg) translate(${depthX * -0.2}px, ${depthY * 0.25}px)`,
           }}
         >
           Live AI workspace
@@ -96,7 +99,7 @@ function HeroScene() {
   )
 }
 
-function TiltTool({ tool, index }) {
+function TiltTool({ tool, index, visible }) {
   const ref = useRef(null)
 
   const onMove = (e) => {
@@ -105,13 +108,15 @@ function TiltTool({ tool, index }) {
     const rect = el.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width
     const y = (e.clientY - rect.top) / rect.height
-    const rotX = (0.5 - y) * 10
-    const rotY = (x - 0.5) * 14
-    el.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-4px)`
+    const rotX = (0.5 - y) * 12
+    const rotY = (x - 0.5) * 16
+    el.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px) scale(1.02)`
   }
 
   const onLeave = () => {
-    if (ref.current) ref.current.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg)'
+    if (ref.current) {
+      ref.current.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0) scale(1)'
+    }
   }
 
   return (
@@ -120,31 +125,41 @@ function TiltTool({ tool, index }) {
       ref={ref}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      className="tilt-card group block no-underline rounded-[28px] border p-6 sm:p-7"
+      className={`tilt-card group block no-underline rounded-[28px] border p-6 sm:p-7 ${visible ? 'animate-reveal-up' : 'opacity-0'}`}
       style={{
         borderColor: 'var(--border)',
         background: 'linear-gradient(165deg, color-mix(in srgb, var(--bg-secondary) 92%, transparent), color-mix(in srgb, var(--bg-tertiary) 70%, transparent))',
         boxShadow: 'var(--shadow)',
-        animationDelay: `${0.15 + index * 0.08}s`,
+        animationDelay: `${0.1 + index * 0.12}s`,
+        transition: 'transform 0.2s ease, box-shadow 0.3s ease',
       }}
     >
       <div className="flex items-baseline justify-between mb-8">
         <span className="font-mono text-xs tracking-widest" style={{ color: tool.accent }}>{tool.mark}</span>
         <span
-          className="h-10 w-10 rounded-xl grid place-items-center text-white text-lg transition-transform duration-300 group-hover:rotate-6"
+          className="h-10 w-10 rounded-xl grid place-items-center text-white text-lg transition-transform duration-500 group-hover:translate-x-1 group-hover:-rotate-12"
           style={{ background: tool.accent }}
         >
           →
         </span>
       </div>
-      <h3 className="font-display text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>{tool.title}</h3>
+      <h3 className="font-display text-2xl mb-2 transition-colors duration-300" style={{ color: 'var(--text-primary)' }}>
+        {tool.title}
+      </h3>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{tool.desc}</p>
+      <div
+        className="mt-6 h-1 rounded-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
+        style={{ background: tool.accent }}
+      />
     </Link>
   )
 }
 
 export default function Home() {
   const [apiOnline, setApiOnline] = useState(null)
+  const [pointer, setPointer] = useState({ x: 0, y: 0 })
+  const [toolsVisible, setToolsVisible] = useState(false)
+  const toolsRef = useRef(null)
 
   useEffect(() => {
     checkHealth()
@@ -152,10 +167,33 @@ export default function Home() {
       .catch(() => setApiOnline(false))
   }, [])
 
+  useEffect(() => {
+    const node = toolsRef.current
+    if (!node) return undefined
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setToolsVisible(true)
+      },
+      { threshold: 0.2 }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  const onHeroMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2
+    setPointer({ x, y })
+  }
+
   return (
     <div className="page-enter">
-      {/* Hero — one composition */}
-      <section className="relative overflow-hidden min-h-[calc(100vh-4rem)]">
+      <section
+        className="relative overflow-hidden min-h-[calc(100vh-4rem)]"
+        onMouseMove={onHeroMove}
+        onMouseLeave={() => setPointer({ x: 0, y: 0 })}
+      >
         <div className="absolute inset-0 atmosphere pointer-events-none" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 pb-16 lg:pt-16 lg:pb-20">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-6 items-center">
@@ -190,25 +228,25 @@ export default function Home() {
 
               {apiOnline !== null && (
                 <p
-                  className="mt-6 text-xs font-medium tracking-wide animate-rise"
+                  className="mt-6 text-xs font-medium tracking-wide animate-rise inline-flex items-center gap-2"
                   style={{ color: apiOnline ? 'var(--accent-deep)' : '#b45309', animationDelay: '0.32s' }}
                 >
+                  <span className="status-dot" style={{ background: apiOnline ? 'var(--accent)' : '#b45309' }} />
                   {apiOnline ? 'Systems connected' : 'Backend offline — start the API'}
                 </p>
               )}
             </div>
 
             <div className="animate-rise" style={{ animationDelay: '0.12s' }}>
-              <HeroScene />
+              <HeroScene pointer={pointer} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tools — interaction surfaces */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pb-24">
+      <section className="relative px-4 sm:px-6 lg:px-8 pb-24" ref={toolsRef}>
         <div className="mx-auto max-w-7xl">
-          <div className="mb-10 max-w-xl">
+          <div className={`mb-10 max-w-xl ${toolsVisible ? 'animate-reveal-up' : 'opacity-0'}`}>
             <h2 className="font-display text-3xl sm:text-4xl" style={{ color: 'var(--text-primary)' }}>
               Three surfaces. One flow.
             </h2>
@@ -219,7 +257,7 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-3 gap-5 scene-3d">
             {TOOLS.map((tool, i) => (
-              <TiltTool key={tool.path} tool={tool} index={i} />
+              <TiltTool key={tool.path} tool={tool} index={i} visible={toolsVisible} />
             ))}
           </div>
         </div>
