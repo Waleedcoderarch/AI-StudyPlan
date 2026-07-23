@@ -1,0 +1,20 @@
+aws_region   = "us-east-1"
+project_name = "ai-studyplan"
+environment  = "dev"
+vpc_cidr     = "10.10.0.0/16"
+image_tag    = "latest"
+
+# Set via: terraform apply -var="groq_api_key=..." -var="alert_email=you@example.com"
+# Or copy terraform.tfvars.example -> terraform.tfvars (gitignored)
+
+monthly_budget_usd          = "30"
+billing_alarm_threshold_usd = 25
+
+server_cpu            = 256
+server_memory         = 512
+client_cpu            = 256
+client_memory         = 512
+server_desired_count  = 1
+client_desired_count  = 1
+server_min_count      = 1
+server_max_count      = 3

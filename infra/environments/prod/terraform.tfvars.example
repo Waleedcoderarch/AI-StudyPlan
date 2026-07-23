@@ -1,0 +1,18 @@
+aws_region          = "us-east-1"
+project_name        = "ai-studyplan"
+environment         = "prod"
+vpc_cidr            = "10.20.0.0/16"
+enable_nat_gateway  = false
+image_tag           = "latest"
+
+monthly_budget_usd          = "100"
+billing_alarm_threshold_usd = 80
+
+server_cpu           = 512
+server_memory        = 1024
+client_cpu           = 256
+client_memory        = 512
+server_desired_count = 2
+client_desired_count = 2
+server_min_count     = 2
+server_max_count     = 10

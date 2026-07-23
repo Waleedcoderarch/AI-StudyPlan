@@ -13,8 +13,13 @@ const historyRoutes = require('./routes/history');
 const app = express();
 
 // Middleware
+const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+const corsOrigins = process.env.CORS_ORIGIN
+  ? [...defaultOrigins, ...process.env.CORS_ORIGIN.split(',').map((o) => o.trim())]
+  : defaultOrigins;
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: corsOrigins,
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
