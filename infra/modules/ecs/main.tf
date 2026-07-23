@@ -119,10 +119,11 @@ resource "aws_ecs_task_definition" "server" {
       { name = "NODE_ENV", value = var.environment },
       { name = "SQLITE_FILE", value = "/data/database.sqlite" },
       { name = "CORS_ORIGIN", value = var.cors_origin },
-      { name = "GROQ_MODEL", value = var.groq_model }
+      { name = "OPENAI_BASE_URL", value = "https://api.groq.com/openai/v1" },
+      { name = "OPENAI_MODEL", value = var.groq_model }
     ]
     secrets = [{
-      name      = "GROQ_API_KEY"
+      name      = "OPENAI_API_KEY"
       valueFrom = var.groq_secret_arn
     }]
     mountPoints = [{

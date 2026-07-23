@@ -1,0 +1,117 @@
+name: Deploy Dev (ECS)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "server/**"
+      - "docker/**"
+      - ".github/workflows/deploy-dev.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  ECR_SERVER: 588681235213.dkr.ecr.us-east-1.amazonaws.com/ai-studyplan-dev-server
+  ECR_CLIENT: 588681235213.dkr.ecr.us-east-1.amazonaws.com/ai-studyplan-dev-client
+  ECS_CLUSTER: ai-studyplan-dev-cluster
+  ECS_SERVER_SERVICE: ai-studyplan-dev-server
+  ECS_CLIENT_SERVICE: ai-studyplan-dev-client
+  ALB_URL: http://ai-studyplan-dev-alb-498635700.us-east-1.elb.amazonaws.com
+
+jobs:
+  build-and-deploy:
+    name: Build, push, deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push server image
+        run: |
+          docker build --platform linux/amd64 \
+            -f docker/server/Dockerfile \
+            -t "$ECR_SERVER:${{ steps.meta.outputs.tag }}" \
+            -t "$ECR_SERVER:latest" .
+          docker push "$ECR_SERVER:${{ steps.meta.outputs.tag }}"
+          docker push "$ECR_SERVER:latest"
+
+      - name: Build & push client image
+        run: |
+          docker build --platform linux/amd64 \
+            -f docker/client/Dockerfile \
+            -t "$ECR_CLIENT:${{ steps.meta.outputs.tag }}" \
+            -t "$ECR_CLIENT:latest" .
+          docker push "$ECR_CLIENT:${{ steps.meta.outputs.tag }}"
+          docker push "$ECR_CLIENT:latest"
+
+      - name: Deploy ECS services
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVER_SERVICE" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_CLIENT_SERVICE" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
+
+      - name: Wait for services stable
+        run: |
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVER_SERVICE" "$ECS_CLIENT_SERVICE" \
+            --region "$AWS_REGION"
+
+      - name: Health check
+        run: |
+          curl -fsS "$ALB_URL/api/health"
+          curl -fsS -o /dev/null -w "%{http_code}\n" "$ALB_URL/"
+
+      - name: Notify success (SNS)
+        if: success() && vars.DEPLOY_SNS_TOPIC_ARN
+        run: |
+          aws sns publish \
+            --topic-arn "${{ vars.DEPLOY_SNS_TOPIC_ARN }}" \
+            --subject "AI StudyPlan DEV deploy OK" \
+            --message "Deploy succeeded for ${{ github.sha }}
+          Repo: ${{ github.repository }}
+          Actor: ${{ github.actor }}
+          URL: $ALB_URL
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Notify failure (SNS)
+        if: failure() && vars.DEPLOY_SNS_TOPIC_ARN
+        run: |
+          aws sns publish \
+            --topic-arn "${{ vars.DEPLOY_SNS_TOPIC_ARN }}" \
+            --subject "AI StudyPlan DEV deploy FAILED" \
+            --message "Deploy failed for ${{ github.sha }}
+          Repo: ${{ github.repository }}
+          Actor: ${{ github.actor }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
