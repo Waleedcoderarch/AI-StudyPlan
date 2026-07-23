@@ -68,29 +68,31 @@ export default function DoubtSolver() {
 
   return (
     <div className="page-enter mx-auto max-w-4xl px-4 py-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-base">💬</div>
-            <h1 className="section-title">AI Doubt Solver</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white"
+              style={{ background: 'linear-gradient(145deg, #0f6f5c, #1faa8a)' }}
+            >
+              01
+            </div>
+            <h1 className="section-title">Doubt Solver</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Ask any question — get clear, structured answers instantly
+            Ask clearly — get structured answers with conversation memory
           </p>
         </div>
         {messages.length > 0 && (
           <button onClick={handleClear} className="btn-secondary text-xs py-2 px-3">
-            🗑 Clear Chat
+            Clear chat
           </button>
         )}
       </div>
 
-      {/* Error banner */}
       {error && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl mb-4 text-sm animate-fade-in border"
-          style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.25)', color: '#ef4444' }}>
-          <span className="flex-shrink-0 text-base">⚠</span>
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl mb-4 text-sm border"
+          style={{ background: 'rgba(180,83,9,0.08)', borderColor: 'rgba(180,83,9,0.25)', color: '#b45309' }}>
           <div>
             <strong>Error:</strong> {error}
             <button onClick={() => setError('')} className="ml-3 underline text-xs opacity-70">dismiss</button>
@@ -98,11 +100,10 @@ export default function DoubtSolver() {
         </div>
       )}
 
-      {/* Chat window */}
       <div className="glass-card overflow-hidden" style={{ height: 'calc(100vh - 220px)', minHeight: 480, display: 'flex', flexDirection: 'column' }}>
         {loadingHistory ? (
           <div className="flex items-center justify-center h-full gap-3" style={{ color: 'var(--text-muted)' }}>
-            <div className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[color:var(--accent)] border-t-transparent rounded-full animate-spin" />
             <span className="text-sm">Loading history…</span>
           </div>
         ) : (
@@ -115,10 +116,9 @@ export default function DoubtSolver() {
         )}
       </div>
 
-      {/* Footer note */}
       <div className="flex items-center justify-between mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-        <span>💾 Conversation history saved automatically</span>
-        <span>{messages.filter(m => m.role === 'user').length} questions asked</span>
+        <span>History saves automatically</span>
+        <span>{messages.filter(m => m.role === 'user').length} questions</span>
       </div>
     </div>
   )

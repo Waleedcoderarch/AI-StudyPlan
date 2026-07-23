@@ -19,22 +19,20 @@ function StepIndicator({ step }) {
                 i < step ? 'text-white' : i === step ? 'text-white' : ''
               }`}
               style={{
-                background: i < step
-                  ? 'linear-gradient(135deg,#0ea5e9,#8b5cf6)'
-                  : i === step
-                    ? 'linear-gradient(135deg,#0ea5e9,#8b5cf6)'
-                    : 'var(--bg-tertiary)',
+                background: i <= step
+                  ? 'linear-gradient(135deg,#0f6f5c,#1faa8a)'
+                  : 'var(--bg-tertiary)',
                 color: i <= step ? '#fff' : 'var(--text-muted)',
-                boxShadow: i === step ? '0 0 0 4px rgba(14,165,233,0.2)' : 'none',
+                boxShadow: i === step ? '0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent)' : 'none',
               }}
             >
               {i < step ? '✓' : i + 1}
             </div>
-            <span className="text-xs whitespace-nowrap" style={{ color: i === step ? '#0ea5e9' : 'var(--text-muted)' }}>{s}</span>
+            <span className="text-xs whitespace-nowrap" style={{ color: i === step ? 'var(--accent-deep)' : 'var(--text-muted)' }}>{s}</span>
           </div>
           {i < STEPS.length - 1 && (
             <div className="h-0.5 w-12 sm:w-20 mx-1 mb-4 rounded-full transition-all duration-500"
-              style={{ background: i < step ? 'linear-gradient(90deg,#0ea5e9,#8b5cf6)' : 'var(--border)' }} />
+              style={{ background: i < step ? 'linear-gradient(90deg,#0f6f5c,#1faa8a)' : 'var(--border)' }} />
           )}
         </React.Fragment>
       ))}

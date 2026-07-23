@@ -1,46 +1,147 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { checkHealth } from '../services/api'
 
-const FEATURES = [
+const TOOLS = [
   {
     path: '/ask',
-    icon: '💬',
-    title: 'AI Doubt Solver',
-    desc: 'Ask any question and get detailed, structured explanations with conversation history.',
-    gradient: 'from-sky-500 to-blue-600',
-    glow: 'rgba(14,165,233,0.25)',
-    badge: 'Conversational',
-    badgeColor: '#0ea5e9',
+    title: 'Doubt Solver',
+    desc: 'Ask anything and get clear, step-by-step explanations with memory.',
+    mark: '01',
+    accent: '#1faa8a',
   },
   {
     path: '/notes',
-    icon: '📄',
-    title: 'Notes Generator',
-    desc: 'Upload any PDF and get concise, well-structured study notes in seconds.',
-    gradient: 'from-violet-500 to-purple-700',
-    glow: 'rgba(139,92,246,0.25)',
-    badge: 'PDF Powered',
-    badgeColor: '#8b5cf6',
+    title: 'Notes Studio',
+    desc: 'Drop a PDF and receive structured study notes you can revise from.',
+    mark: '02',
+    accent: '#c9783a',
   },
   {
     path: '/quiz',
-    icon: '🎯',
-    title: 'Quiz Generator',
-    desc: 'Generate interactive MCQ quizzes on any topic with automatic scoring & explanations.',
-    gradient: 'from-emerald-500 to-teal-600',
-    glow: 'rgba(16,185,129,0.25)',
-    badge: 'Interactive',
-    badgeColor: '#10b981',
+    title: 'Quiz Arena',
+    desc: 'Generate MCQs from any topic and score yourself instantly.',
+    mark: '03',
+    accent: '#1a3348',
   },
 ]
 
-const STATS = [
-  { label: 'AI-Powered', value: '100%' },
-  { label: 'Topics Supported', value: '∞' },
-  { label: 'Response Speed', value: '<3s' },
-  { label: 'MCQ Options', value: '4 each' },
-]
+function HeroScene() {
+  return (
+    <div className="scene-3d relative h-[340px] sm:h-[420px] lg:h-[520px] w-full" aria-hidden="true">
+      <div className="absolute inset-0 flex items-center justify-center">
+        {/* Orbit ring */}
+        <div className="absolute w-[78%] max-w-[460px] aspect-square rounded-full border border-[color:var(--border)] opacity-60 animate-orbit" />
+
+        {/* Back plane */}
+        <div
+          className="plane-3d absolute w-[72%] max-w-[420px] aspect-[4/3] rounded-[28px] animate-float-slow"
+          style={{
+            background: 'linear-gradient(145deg, #122334 0%, #1a3348 55%, #0f6f5c 140%)',
+            boxShadow: '0 40px 80px rgba(7,16,24,0.35)',
+            transform: 'rotateX(18deg) rotateY(-22deg) translateZ(-40px)',
+          }}
+        >
+          <div className="absolute inset-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
+            <div className="h-2 w-24 rounded bg-white/25 mb-4" />
+            <div className="space-y-2">
+              <div className="h-2 w-full rounded bg-white/15" />
+              <div className="h-2 w-5/6 rounded bg-white/15" />
+              <div className="h-2 w-4/6 rounded bg-white/15" />
+            </div>
+            <div className="mt-8 grid grid-cols-3 gap-2">
+              <div className="h-14 rounded-xl bg-[#1faa8a]/35" />
+              <div className="h-14 rounded-xl bg-[#c9783a]/30" />
+              <div className="h-14 rounded-xl bg-white/10" />
+            </div>
+          </div>
+        </div>
+
+        {/* Front floating sheet */}
+        <div
+          className="plane-3d absolute w-[58%] max-w-[320px] aspect-[3/4] rounded-[22px] animate-float-mid"
+          style={{
+            background: 'linear-gradient(160deg, #fffdf9, #efeae2)',
+            boxShadow: '0 30px 70px rgba(11,23,36,0.22)',
+            transform: 'rotateX(10deg) rotateY(16deg) translateZ(60px)',
+            right: '8%',
+            top: '12%',
+          }}
+        >
+          <div className="p-5 h-full flex flex-col">
+            <div className="text-[10px] tracking-[0.25em] uppercase text-[#5b6b7c] font-semibold">Session</div>
+            <div className="mt-3 font-display text-2xl text-[#0b1724] leading-tight">Study plane</div>
+            <div className="mt-auto space-y-2">
+              <div className="h-2 rounded bg-[#1faa8a]/25 w-full" />
+              <div className="h-2 rounded bg-[#1faa8a]/20 w-4/5" />
+              <div className="h-2 rounded bg-[#c9783a]/25 w-3/5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Accent chip */}
+        <div
+          className="absolute left-[8%] bottom-[18%] rounded-2xl px-4 py-3 text-sm font-semibold text-white animate-rise"
+          style={{
+            background: 'linear-gradient(135deg, #0f6f5c, #1faa8a)',
+            boxShadow: '0 18px 40px rgba(31,170,138,0.35)',
+            transform: 'rotateX(8deg) rotateY(-8deg)',
+            animationDelay: '0.35s',
+          }}
+        >
+          Live AI workspace
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TiltTool({ tool, index }) {
+  const ref = useRef(null)
+
+  const onMove = (e) => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    const rotX = (0.5 - y) * 10
+    const rotY = (x - 0.5) * 14
+    el.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-4px)`
+  }
+
+  const onLeave = () => {
+    if (ref.current) ref.current.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg)'
+  }
+
+  return (
+    <Link
+      to={tool.path}
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      className="tilt-card group block no-underline rounded-[28px] border p-6 sm:p-7"
+      style={{
+        borderColor: 'var(--border)',
+        background: 'linear-gradient(165deg, color-mix(in srgb, var(--bg-secondary) 92%, transparent), color-mix(in srgb, var(--bg-tertiary) 70%, transparent))',
+        boxShadow: 'var(--shadow)',
+        animationDelay: `${0.15 + index * 0.08}s`,
+      }}
+    >
+      <div className="flex items-baseline justify-between mb-8">
+        <span className="font-mono text-xs tracking-widest" style={{ color: tool.accent }}>{tool.mark}</span>
+        <span
+          className="h-10 w-10 rounded-xl grid place-items-center text-white text-lg transition-transform duration-300 group-hover:rotate-6"
+          style={{ background: tool.accent }}
+        >
+          →
+        </span>
+      </div>
+      <h3 className="font-display text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>{tool.title}</h3>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{tool.desc}</p>
+    </Link>
+  )
+}
 
 export default function Home() {
   const [apiOnline, setApiOnline] = useState(null)
@@ -52,107 +153,73 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="page-enter min-h-screen">
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pt-20 pb-16 text-center">
-        {/* Ambient blobs */}
-        <div className="absolute -top-20 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #0ea5e9, transparent)' }} />
-        <div className="absolute top-10 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #8b5cf6, transparent)' }} />
-
-        <div className="relative mx-auto max-w-3xl">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in"
-            style={{ borderColor: 'rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.08)', color: '#0ea5e9' }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-slow" />
-            Powered by GPT · Full-Stack AI Application
-          </div>
-
-          <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5 animate-slide-up"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)', animationDelay: '80ms' }}
-          >
-            Your Personal
-            <br />
-            <span className="gradient-text">AI Study Hub</span>
-          </h1>
-
-          <p className="text-base sm:text-lg leading-relaxed mb-8 animate-slide-up max-w-xl mx-auto"
-            style={{ color: 'var(--text-muted)', animationDelay: '160ms' }}>
-            Solve doubts instantly, transform PDFs into structured notes, and test your knowledge — all powered by AI.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: '240ms' }}>
-            <Link to="/ask" className="btn-primary text-base px-7 py-3.5">
-              Ask AI a Question →
-            </Link>
-            <Link to="/notes" className="btn-secondary text-base px-7 py-3.5">
-              Upload a PDF
-            </Link>
-          </div>
-
-          {/* API status */}
-          {apiOnline !== null && (
-            <div className={`inline-flex items-center gap-2 mt-6 text-xs rounded-full px-3 py-1.5 border animate-fade-in ${
-              apiOnline
-                ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5'
-                : 'text-red-400 border-red-500/20 bg-red-500/5'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${apiOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-              {apiOnline ? 'Backend online & connected' : 'Backend offline — start the server'}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="px-4 pb-10">
-        <div className="mx-auto max-w-4xl grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {STATS.map(s => (
-            <div key={s.label} className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold gradient-text" style={{ fontFamily: 'var(--font-display)' }}>{s.value}</div>
-              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Feature cards */}
-      <section className="px-4 pb-20">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="section-title text-center mb-2">Everything you need to study smarter</h2>
-          <p className="text-center text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Three powerful AI tools in one clean interface</p>
-
-          <div className="grid sm:grid-cols-3 gap-5">
-            {FEATURES.map((f, i) => (
-              <Link
-                key={f.path}
-                to={f.path}
-                className="glass-card p-6 flex flex-col gap-4 group no-underline"
-                style={{ animationDelay: `${i * 80}ms` }}
+    <div className="page-enter">
+      {/* Hero — one composition */}
+      <section className="relative overflow-hidden min-h-[calc(100vh-4rem)]">
+        <div className="absolute inset-0 atmosphere pointer-events-none" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 pb-16 lg:pt-16 lg:pb-20">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-6 items-center">
+            <div className="max-w-xl">
+              <p
+                className="font-display text-4xl sm:text-5xl lg:text-[3.4rem] leading-[1.05] tracking-tight animate-rise"
+                style={{ color: 'var(--text-primary)' }}
               >
-                <div className="flex items-start justify-between">
-                  <div
-                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}
-                    style={{ boxShadow: `0 8px 24px ${f.glow}` }}
-                  >
-                    {f.icon}
-                  </div>
-                  <span className="badge text-xs" style={{ background: `${f.badgeColor}15`, color: f.badgeColor }}>
-                    {f.badge}
-                  </span>
-                </div>
+                AI Study Hub
+              </p>
+              <h1
+                className="mt-5 text-xl sm:text-2xl font-medium leading-snug animate-rise"
+                style={{ color: 'var(--text-primary)', animationDelay: '0.08s' }}
+              >
+                A dimensional workspace for doubts, notes, and quizzes.
+              </h1>
+              <p
+                className="mt-4 text-base leading-relaxed animate-rise max-w-md"
+                style={{ color: 'var(--text-muted)', animationDelay: '0.16s' }}
+              >
+                Built for focused learning — ask clearly, capture notes from PDFs, and pressure-test what you know.
+              </p>
 
-                <div>
-                  <h3 className="font-bold text-base mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
-                    {f.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
-                </div>
+              <div className="mt-8 flex flex-wrap gap-3 animate-rise" style={{ animationDelay: '0.24s' }}>
+                <Link to="/ask" className="btn-primary px-7 py-3.5 text-base">
+                  Enter workspace
+                </Link>
+                <Link to="/notes" className="btn-secondary px-7 py-3.5 text-base">
+                  Generate notes
+                </Link>
+              </div>
 
-                <div className="mt-auto flex items-center gap-1 text-xs font-semibold" style={{ color: f.badgeColor }}>
-                  Try it now <span className="group-hover:translate-x-1 transition-transform duration-200">→</span>
-                </div>
-              </Link>
+              {apiOnline !== null && (
+                <p
+                  className="mt-6 text-xs font-medium tracking-wide animate-rise"
+                  style={{ color: apiOnline ? 'var(--accent-deep)' : '#b45309', animationDelay: '0.32s' }}
+                >
+                  {apiOnline ? 'Systems connected' : 'Backend offline — start the API'}
+                </p>
+              )}
+            </div>
+
+            <div className="animate-rise" style={{ animationDelay: '0.12s' }}>
+              <HeroScene />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tools — interaction surfaces */}
+      <section className="relative px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 max-w-xl">
+            <h2 className="font-display text-3xl sm:text-4xl" style={{ color: 'var(--text-primary)' }}>
+              Three surfaces. One flow.
+            </h2>
+            <p className="mt-3 text-sm sm:text-base" style={{ color: 'var(--text-muted)' }}>
+              Move from question to notes to quiz without leaving the study plane.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-5 scene-3d">
+            {TOOLS.map((tool, i) => (
+              <TiltTool key={tool.path} tool={tool} index={i} />
             ))}
           </div>
         </div>

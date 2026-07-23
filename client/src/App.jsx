@@ -20,7 +20,7 @@ export default function App() {
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('theme')
     if (saved) return saved === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
+    return false
   })
 
   const [sessionId] = useState(() => {
@@ -40,7 +40,7 @@ export default function App() {
     <ThemeContext.Provider value={{ dark, toggleTheme }}>
       <SessionContext.Provider value={{ sessionId }}>
         <BrowserRouter>
-          <div className="min-h-screen dot-grid transition-colors duration-300" style={{ background: 'var(--bg-primary)' }}>
+          <div className="min-h-screen atmosphere transition-colors duration-300">
             <Navbar />
             <main className="pt-16">
               <Routes>
