@@ -10,6 +10,7 @@ from docx.oxml import OxmlElement
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "AI-StudyHub-Complete-Project-Report.docx"
+ARCH_DIAGRAM = ROOT / "docs" / "images" / "aws-infrastructure-architecture.png"
 
 
 def set_heading_color(run, rgb=(0x0B, 0x17, 0x24)):
@@ -185,6 +186,40 @@ def main():
 
     # 4
     h(doc, "4. Architecture Decisions", 1)
+    h(doc, "4.0 AWS infrastructure overview diagram", 2)
+    p(
+        doc,
+        "The diagram below shows the full AWS layout used for AI Study Hub: GitHub Actions CI/CD, "
+        "Terraform state in S3, VPC networking, ALB path routing to client/server/Grafana, ECS Fargate "
+        "services, EFS for SQLite, Secrets Manager for the Groq API key, CloudWatch logging and alarms, "
+        "and the staging monitoring stack (YACE → Prometheus → Grafana) with SNS cost and reliability alerts.",
+    )
+    if ARCH_DIAGRAM.exists():
+        fig = doc.add_paragraph()
+        fig.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = fig.add_run()
+        run.add_picture(str(ARCH_DIAGRAM), width=Inches(6.5))
+        caption = doc.add_paragraph()
+        caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap = caption.add_run(
+            "Figure 1. AI Study Hub — AWS Infrastructure "
+            "(Terraform + CI/CD via GitHub Actions)"
+        )
+        cap.italic = True
+        cap.font.size = Pt(9)
+        cap.font.color.rgb = RGBColor(0x5B, 0x6B, 0x7C)
+    else:
+        p(doc, f"[Diagram missing: expected file at {ARCH_DIAGRAM}]")
+    p(doc, "Diagram legend (how to read the figure):", bold=True)
+    bullets(
+        doc,
+        [
+            "Solid black lines: user traffic (Internet → Route 53/DNS → ALB → target groups → ECS tasks).",
+            "Solid blue lines: internal data flow (ECR images, Secrets Manager, EFS SQLite mounts).",
+            "Dashed lines: logs, metrics, and access paths (CloudWatch, YACE, Prometheus, Grafana).",
+            "Orange lines: alerts and notifications (CloudWatch Alarms / AWS Budgets → SNS → email).",
+        ],
+    )
     h(doc, "4.1 ECS Fargate instead of EKS / Minikube", 2)
     p(
         doc,
