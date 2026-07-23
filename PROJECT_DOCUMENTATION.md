@@ -9,6 +9,11 @@ This document describes everything built for this project from application basel
 
 ---
 
+# Infrastructure Diagram 
+
+<img width="1536" height="1024" alt="ChatGPT Image Jul 24, 2026, 03_10_00 AM" src="https://github.com/user-attachments/assets/a59d2468-aa10-4702-9299-abd05e516668" />
+
+
 ## 1. Project goal
 
 Deploy the existing **AI Study Hub** (doubt solver, PDF notes generator, quiz generator) on AWS with:
