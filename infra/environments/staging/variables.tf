@@ -86,3 +86,14 @@ variable "server_max_count" {
   type    = number
   default = 4
 }
+
+variable "grafana_admin_user" {
+  type    = string
+  default = "admin"
+}
+
+variable "grafana_admin_password" {
+  type      = string
+  sensitive = true
+  default   = "StudyPlan!Observability"
+}

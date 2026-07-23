@@ -1,0 +1,45 @@
+apiVersion: v1alpha1
+discovery:
+  jobs:
+    - type: AWS/ECS
+      regions: ["us-east-1"]
+      period: 60
+      length: 300
+      metrics:
+        - name: CPUUtilization
+          statistics: [Average]
+          recentlyActiveOnly: true
+        - name: MemoryUtilization
+          statistics: [Average]
+          recentlyActiveOnly: true
+      dimensionNameRequirements: [ClusterName, ServiceName]
+
+    - type: AWS/ApplicationELB
+      regions: ["us-east-1"]
+      period: 60
+      length: 300
+      metrics:
+        - name: RequestCount
+          statistics: [Sum]
+        - name: TargetResponseTime
+          statistics: [Average]
+        - name: HTTPCode_Target_5XX_Count
+          statistics: [Sum]
+        - name: HTTPCode_Target_2XX_Count
+          statistics: [Sum]
+        - name: UnHealthyHostCount
+          statistics: [Average]
+        - name: HealthyHostCount
+          statistics: [Average]
+      dimensionNameRequirements: [LoadBalancer]
+
+    - type: AWS/ApplicationELB
+      regions: ["us-east-1"]
+      period: 60
+      length: 300
+      metrics:
+        - name: RequestCountPerTarget
+          statistics: [Sum]
+        - name: TargetResponseTime
+          statistics: [Average]
+      dimensionNameRequirements: [TargetGroup]

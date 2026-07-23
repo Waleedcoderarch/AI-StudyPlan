@@ -103,3 +103,60 @@ module "cost_alerts" {
   billing_alarm_threshold_usd = var.billing_alarm_threshold_usd
   tags                        = local.tags
 }
+
+resource "aws_ecr_repository" "prometheus" {
+  name                 = "${local.name_prefix}-prometheus"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  image_scanning_configuration { scan_on_push = true }
+  tags = local.tags
+}
+
+resource "aws_ecr_repository" "grafana" {
+  name                 = "${local.name_prefix}-grafana"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  image_scanning_configuration { scan_on_push = true }
+  tags = local.tags
+}
+
+resource "aws_ecr_repository" "yace" {
+  name                 = "${local.name_prefix}-yace"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  image_scanning_configuration { scan_on_push = true }
+  tags = local.tags
+}
+
+resource "aws_ecr_repository" "alertmanager" {
+  name                 = "${local.name_prefix}-alertmanager"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  image_scanning_configuration { scan_on_push = true }
+  tags = local.tags
+}
+
+module "monitoring" {
+  source                         = "../../modules/monitoring"
+  name_prefix                    = local.name_prefix
+  aws_region                     = var.aws_region
+  vpc_id                         = module.vpc.vpc_id
+  subnet_ids                     = module.vpc.public_subnet_ids
+  ecs_cluster_id                 = module.ecs.cluster_id
+  ecs_cluster_name               = module.ecs.cluster_name
+  ecs_security_group_id          = module.ecs.ecs_security_group_id
+  http_listener_arn              = module.alb.http_listener_arn
+  alb_url                        = "http://${module.alb.alb_dns_name}"
+  alb_arn_suffix                 = module.alb.alb_arn_suffix
+  server_target_group_arn_suffix = module.alb.server_target_group_arn_suffix
+  server_service_name            = module.ecs.server_service_name
+  sns_topic_arn                  = module.cost_alerts.sns_topic_arn
+  prometheus_image               = "${aws_ecr_repository.prometheus.repository_url}:${var.image_tag}"
+  grafana_image                  = "${aws_ecr_repository.grafana.repository_url}:${var.image_tag}"
+  yace_image                     = "${aws_ecr_repository.yace.repository_url}:${var.image_tag}"
+  alertmanager_image             = "${aws_ecr_repository.alertmanager.repository_url}:${var.image_tag}"
+  grafana_admin_user             = var.grafana_admin_user
+  grafana_admin_password         = var.grafana_admin_password
+  alert_email                    = var.alert_email
+  tags                           = local.tags
+}

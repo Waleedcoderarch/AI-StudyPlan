@@ -1,0 +1,52 @@
+groups:
+  - name: ai-studyplan-scaling
+    rules:
+      - alert: HighECSCPU
+        expr: avg_over_time(aws_ecs_cpuutilization_average[5m]) > 70
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "ECS CPU high ({{ $value | printf \"%.1f\" }}%)"
+          description: "CPU above 70% for 5m — autoscaling should add tasks. Verify max capacity is enough."
+
+      - alert: ECSCPUCritical
+        expr: avg_over_time(aws_ecs_cpuutilization_average[5m]) > 85
+        for: 3m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "ECS CPU critical ({{ $value | printf \"%.1f\" }}%)"
+          description: "CPU above 85%. Risk of latency/502s. Scale out or raise Fargate size."
+
+      - alert: HighALB5xx
+        expr: sum(rate(aws_applicationelb_httpcode_target_5_xx_count_sum[5m])) > 5
+        for: 3m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "ALB target 5xx elevated"
+          description: "Elevated 5xx from targets — possible crash, bad deploy, or overload."
+
+      - alert: UnhealthyTargets
+        expr: max(aws_applicationelb_un_healthy_host_count_average) > 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Unhealthy ALB targets detected"
+          description: "One or more targets failing health checks — users may see 502 Bad Gateway."
+
+      - alert: HighALBLatency
+        expr: avg_over_time(aws_applicationelb_target_response_time_average[5m]) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "API latency high ({{ $value | printf \"%.2f\" }}s)"
+          description: "Target response time > 2s. Check AI provider latency or scale tasks."

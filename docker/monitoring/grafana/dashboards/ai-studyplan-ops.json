@@ -1,0 +1,411 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "options": {
+        "content": "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-radius:16px;background:linear-gradient(120deg,#0b1f2a 0%,#123447 45%,#0e2f2a 100%);border:1px solid rgba(94,234,212,0.25);box-shadow:0 10px 40px rgba(0,0,0,0.35);\">\n  <div>\n    <div style=\"font-size:13px;letter-spacing:0.22em;text-transform:uppercase;color:#5eead4;font-weight:600;\">AI StudyPlan · Platform Operations</div>\n    <div style=\"font-size:28px;font-weight:700;color:#f8fafc;margin-top:4px;font-family:Georgia,serif;\">Live Reliability Command Center</div>\n    <div style=\"color:#94a3b8;margin-top:4px;\">ECS · ALB · Autoscaling · Latency · Error budget</div>\n  </div>\n  <div style=\"text-align:right;color:#cbd5e1;font-size:13px;line-height:1.6;\">\n    <div>Region <b style=\"color:#f8fafc;\">us-east-1</b></div>\n    <div>Refresh <b style=\"color:#5eead4;\">30s</b></div>\n    <div>Source <b style=\"color:#fbbf24;\">Prometheus + CloudWatch</b></div>\n  </div>\n</div>",
+        "mode": "html"
+      },
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#134e4a", "value": null },
+              { "color": "#14b8a6", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 4 },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Healthy Targets",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(aws_applicationelb_healthy_host_count_average) or vector(0)",
+          "legendFormat": "healthy",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#14532d", "value": null },
+              { "color": "#f59e0b", "value": 1 },
+              { "color": "#ef4444", "value": 2 }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 4 },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "title": "Unhealthy Targets",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(aws_applicationelb_un_healthy_host_count_average) or vector(0)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#0f766e", "value": null },
+              { "color": "#f59e0b", "value": 60 },
+              { "color": "#ef4444", "value": 80 }
+            ]
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 4 },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "title": "ECS CPU (avg)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(aws_ecs_cpuutilization_average) or vector(0)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#1e3a5f", "value": null },
+              { "color": "#38bdf8", "value": 50 },
+              { "color": "#f59e0b", "value": 75 }
+            ]
+          },
+          "unit": "percent",
+          "max": 100
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 4 },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "title": "ECS Memory (avg)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(aws_ecs_memoryutilization_average) or vector(0)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#422006", "value": null },
+              { "color": "#fbbf24", "value": 0.1 }
+            ]
+          },
+          "unit": "reqps"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 4 },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "title": "Request Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(aws_applicationelb_request_count_sum[5m])) or vector(0)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#14532d", "value": null },
+              { "color": "#ef4444", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 4 },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "title": "5xx Errors / min",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(aws_applicationelb_httpcode_target_5_xx_count_sum[5m])) * 60 or vector(0)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 28,
+            "gradientMode": "scheme",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "id": 10,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Autoscaling Pressure · CPU & Memory by Service",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "aws_ecs_cpuutilization_average",
+          "legendFormat": "CPU {{dimension_ServiceName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "aws_ecs_memoryutilization_average",
+          "legendFormat": "Mem {{dimension_ServiceName}}",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "gradientMode": "hue",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "normal" }
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "id": 11,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Traffic Mix · 2xx vs 5xx (ALB Targets)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(aws_applicationelb_httpcode_target_2_xx_count_sum[5m])) * 60 or vector(0)",
+          "legendFormat": "2xx / min",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(aws_applicationelb_httpcode_target_5_xx_count_sum[5m])) * 60 or vector(0)",
+          "legendFormat": "5xx / min",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#2dd4bf", "mode": "fixed" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "id": 12,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "title": "User Experience · Target Response Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "avg(aws_applicationelb_target_response_time_average) or vector(0)",
+          "legendFormat": "avg latency",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "id": 13,
+      "options": {
+        "legend": { "calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "title": "Capacity · Healthy vs Unhealthy Hosts",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(aws_applicationelb_healthy_host_count_average) or vector(0)",
+          "legendFormat": "healthy",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(aws_applicationelb_un_healthy_host_count_average) or vector(0)",
+          "legendFormat": "unhealthy",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 26 },
+      "id": 101,
+      "options": {
+        "content": "<div style=\"padding:14px 18px;border-radius:14px;background:rgba(15,23,42,0.85);border:1px solid rgba(251,191,36,0.25);color:#e2e8f0;\">\n<b style=\"color:#fbbf24;\">Scaling playbook</b> &nbsp; CPU &gt; 60% → ECS target tracking adds tasks &nbsp;·&nbsp; CPU &gt; 85% alert → raise <code>server_max_count</code> &nbsp;·&nbsp; Unhealthy hosts → check deploy / 502 &nbsp;·&nbsp; Sustained 5xx → rollback image tag\n</div>",
+        "mode": "html"
+      },
+      "transparent": true,
+      "type": "text"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["ai-studyplan", "ecs", "alb", "autoscaling", "executive"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AI StudyPlan · Reliability Command Center",
+  "uid": "ai-studyplan-ops",
+  "version": 1,
+  "weekStart": ""
+}

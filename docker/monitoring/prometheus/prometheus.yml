@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+  external_labels:
+    project: ai-studyplan
+    monitor: ecs-observability
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["localhost:9093"]
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: yace-cloudwatch
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["localhost:5000"]
