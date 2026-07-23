@@ -6,205 +6,310 @@ A full-stack AI-powered study tool with three core features:
 - **🎯 Quiz Generator** — Generate interactive MCQs from any topic or PDF, with timer & scoring
 
 ---
+# Infrastructure Diagram 
 
-## 🏗 Tech Stack
+<img width="1536" height="1024" alt="ChatGPT Image Jul 24, 2026, 03_10_00 AM" src="https://github.com/user-attachments/assets/a59d2468-aa10-4702-9299-abd05e516668" />
 
-| Layer      | Technology                              |
-|------------|-----------------------------------------|
-| Frontend   | React 18, Vite, Tailwind CSS, React Router |
-| Backend    | Node.js, Express, REST API             |
-| AI         | OpenAI GPT-3.5-Turbo                   |
-| Database   | MongoDB (Mongoose)                     |
-| File Parse | pdf-parse, multer                      |
+
+## 1. Project goal
+
+Deploy the existing **AI Study Hub** (doubt solver, PDF notes generator, quiz generator) on AWS with:
+
+- Infrastructure as Code (**Terraform**)
+- Containerized deploy (**Docker + ECS Fargate**)
+- Environment separation (**dev → staging → prod**)
+- **CI/CD** for automatic and gated releases
+- Cost controls (**budgets + SNS alerts**)
+- Metrics & dashboards (**Prometheus + Grafana**)
+- A polished, brand-first frontend UI
+
+The application itself was already built (React/Vite client + Node/Express server). This engagement focused on **platform, delivery, and product polish**.
 
 ---
 
-## 📁 Project Structure
+## 2. Application overview
 
-```
-ai-doubt-solver/
-├── package.json             ← root (concurrently runner)
-│
-├── server/
-│   ├── index.js             ← Express entry point
-│   ├── .env.example         ← Copy to .env and fill values
-│   ├── routes/
-│   │   ├── ask.js           ← POST /api/ask
-│   │   ├── upload.js        ← POST /api/upload
-│   │   ├── notes.js         ← POST /api/notes
-│   │   ├── quiz.js          ← POST /api/quiz
-│   │   └── history.js       ← GET  /api/history/:sessionId
-│   ├── controllers/
-│   │   ├── askController.js
-│   │   ├── uploadController.js
-│   │   ├── notesController.js
-│   │   └── quizController.js
-│   ├── services/
-│   │   ├── openaiService.js ← All GPT prompt engineering
-│   │   └── pdfService.js    ← PDF text extraction
-│   └── models/
-│       ├── Conversation.js
-│       ├── Note.js
-│       └── Quiz.js
-│
-└── client/
-    ├── index.html
-    ├── vite.config.js       ← Proxy /api → localhost:5000
-    ├── tailwind.config.js
-    └── src/
-        ├── App.jsx           ← Router + ThemeContext + SessionContext
-        ├── index.css         ← Global styles + CSS variables
-        ├── main.jsx
-        ├── components/
-        │   ├── Navbar.jsx
-        │   ├── ChatUI.jsx
-        │   ├── FileUpload.jsx
-        │   ├── QuizUI.jsx
-        │   └── LoadingSpinner.jsx
-        ├── pages/
-        │   ├── Home.jsx
-        │   ├── DoubtSolver.jsx
-        │   ├── NotesGenerator.jsx
-        │   └── QuizPage.jsx
-        └── services/
-            └── api.js        ← All axios API calls
+| Layer | Stack |
+|-------|--------|
+| Frontend | React, Vite, Tailwind CSS, React Router |
+| Backend | Node.js, Express |
+| AI | OpenAI-compatible client → **Groq** (`OPENAI_API_KEY` + `OPENAI_BASE_URL`) |
+| Data | SQLite via Sequelize (persisted on **EFS** in AWS) |
+| Features | Doubt solver, PDF → notes, quiz generator |
+
+### Repo layout (high level)
+
+```text
+AI-StudyPlan/
+├── client/                 # React frontend
+├── server/                 # Express API
+├── docker/                 # App + monitoring images
+├── infra/                  # Terraform (modules + environments)
+├── .github/workflows/      # CI/CD
+└── docs / markdown guides  # This file + CI-CD / monitoring notes
 ```
 
 ---
 
-## ⚙️ Prerequisites
+## 3. Architecture decisions
 
-- **Node.js** v18 or higher — [nodejs.org](https://nodejs.org)
-- **npm** v9 or higher
-- **OpenAI API Key** — [platform.openai.com](https://platform.openai.com/api-keys)
-- **MongoDB** — [MongoDB Atlas (free)](https://www.mongodb.com/atlas) or local install
+### Why ECS Fargate (not EKS / Minikube)
+
+Early discussion included Minikube and EKS. The final production path is **ECS Fargate**:
+
+| Option | Decision |
+|--------|----------|
+| Minikube | Local only — not for AWS scale |
+| EKS | Higher fixed cost (~control plane) — deferred |
+| **ECS Fargate** | Chosen — simpler ops, pay-per-task, ALB integration |
+
+There are **no Kubernetes Deployment / Service / Ingress** manifests. Equivalents:
+
+| Kubernetes idea | What we use |
+|-----------------|-------------|
+| Deployment | ECS Service + Task Definition |
+| Service / Ingress | ALB + target groups + path rules |
+| Pod | Fargate task |
+| HPA / ASG nodes | ECS Application Auto Scaling (CPU) |
+
+### Traffic flow
+
+```text
+Internet
+   ↓
+Application Load Balancer
+   ├── /api/* , /uploads/*  →  server tasks (:5000)
+   ├── /grafana/*           →  monitoring Grafana (:3000)  [staging]
+   └── /*                   →  client nginx (:80)
+```
 
 ---
 
-## 🚀 Setup Instructions
+## 4. What was delivered (timeline)
 
-### 1. Clone / Download the project
+### Phase A — Project setup
 
-```bash
-cd ai-doubt-solver
+1. Cloned app into `C:\Users\IRUM NAUREEN\Projects\AI-StudyPlan`
+2. Kept work in the **same GitHub repo** (`Waleedcoderarch/AI-StudyPlan`) so the original app was not replaced — only extended
+3. Connected GitHub CLI as **Waleedcoderarch**
+4. Configured AWS CLI (`us-east-1`, IAM user used for Terraform/deploy)
+
+### Phase B — Infrastructure as Code (Terraform)
+
+Modular Terraform under `infra/`:
+
+| Module | Purpose |
+|--------|---------|
+| `vpc` | VPC, public/private subnets, IGW (NAT off by default to save cost) |
+| `ecr` | Container registries for server + client |
+| `alb` | Public ALB, target groups, `/api` routing |
+| `efs` | Persistent volume for SQLite |
+| `ecs` | Fargate cluster, services, CPU autoscaling, Secrets Manager wiring |
+| `cost_alerts` | AWS Budgets + SNS email + billing alarm |
+| `monitoring` | Prometheus/Grafana/YACE stack + scaling alarms (staging) |
+
+Environments:
+
+| Env | Status | Notes |
+|-----|--------|-------|
+| **dev** | Live | Small Fargate sizes, CI auto-deploy |
+| **staging** | Live | Pre-prod test + Grafana |
+| **prod** | Terraform ready | Not applied — manual promote only |
+
+Key app env on ECS server:
+
+- `OPENAI_API_KEY` ← Secrets Manager (Groq key)
+- `OPENAI_BASE_URL=https://api.groq.com/openai/v1`
+- `OPENAI_MODEL` (e.g. `llama-3.1-8b-instant`)
+- `CORS_ORIGIN` ← ALB URL
+- `SQLITE_FILE=/data/database.sqlite` (EFS)
+
+### Phase C — Containers
+
+- `docker/server/Dockerfile` — Node API
+- `docker/client/Dockerfile` — Vite build + nginx
+- Images pushed to ECR; ECS services force-redeployed
+
+### Phase D — CI/CD (GitHub Actions)
+
+| Workflow | Trigger | Action |
+|----------|---------|--------|
+| `deploy-dev.yml` | Push to `main` (app/docker paths) | Build → ECR → ECS deploy → health check |
+| `deploy-staging.yml` | `staging` branch or manual | Deploy to staging |
+| `deploy-prod.yml` | Manual only (`confirm=deploy-prod`) | Gated production deploy |
+| `terraform-plan.yml` | PRs touching `infra/` | Plan + PR comment |
+| `reusable-ecs-deploy.yml` | Shared by env workflows | Common build/deploy steps |
+
+Promotion model:
+
+```text
+feature → PR
+   ↓
+merge to main → DEV (automatic)
+   ↓
+promote → STAGING (test)
+   ↓
+manual confirm + approval → PROD
 ```
 
-### 2. Create the `.env` file for the backend
+Required GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `GROQ_API_KEY`, `ALERT_EMAIL`.
 
-```bash
-cp server/.env.example server/.env
+### Phase E — Observability
+
+On **staging**:
+
+- **YACE** — CloudWatch → Prometheus metrics (ECS CPU/memory, ALB traffic/errors)
+- **Prometheus** — scrape + alert rules
+- **Grafana** — executive dashboard *AI StudyPlan · Reliability Command Center*
+- **CloudWatch alarms → SNS** — email on high CPU, ALB 5xx, unhealthy hosts
+
+Grafana URL (staging):
+
+`http://ai-studyplan-staging-alb-524443134.us-east-1.elb.amazonaws.com/grafana/`
+
+Default login (change in Terraform): `admin` / `StudyPlan!Observability`
+
+### Phase F — Frontend redesign
+
+Replaced neon/purple UI with a **brand-first 3D study-plane** experience:
+
+- Fonts: Fraunces + Sora
+- Palette: ink / bone / teal / copper
+- CSS 3D hero planes + orbit motion
+- Cursor parallax, scroll reveals, button sheen, tilt tool panels
+- Chat UI aligned to the same design system
+
+---
+
+## 5. Live endpoints
+
+| Environment | URL |
+|-------------|-----|
+| Dev app | http://ai-studyplan-dev-alb-498635700.us-east-1.elb.amazonaws.com |
+| Staging app | http://ai-studyplan-staging-alb-524443134.us-east-1.elb.amazonaws.com |
+| Staging Grafana | http://ai-studyplan-staging-alb-524443134.us-east-1.elb.amazonaws.com/grafana/ |
+| GitHub Actions | https://github.com/Waleedcoderarch/AI-StudyPlan/actions |
+
+Health check: `GET /api/health`
+
+---
+
+## 6. Cost & budgets
+
+### Services used by this project
+
+VPC, ALB, ECS Fargate, ECR, EFS, Secrets Manager, CloudWatch Logs, AWS Budgets, SNS, (staging) monitoring Fargate task.
+
+**Intentionally avoided for cost:** NAT Gateway (default), EKS control plane, always-on large EC2 ASGs.
+
+### Budgets (approx.)
+
+| Env | Monthly budget setting |
+|-----|------------------------|
+| Dev | $30 (may be tight with ALB — raise if needed) |
+| Staging | $50 |
+
+Alerts email: configured SNS subscription (confirm in inbox).
+
+**Note:** Account-level Cost Explorer may show other workloads (e.g. EKS/WAF). Filter by tag `Project=ai-studyplan` / `Environment` when data is available (billing lag ~24–48h).
+
+Rough steady-state estimate for **dev + staging**: roughly **$75–115 / month** (ALB + Fargate dominate).
+
+---
+
+## 7. Scaling (how it works today)
+
+- **Not** EC2 Auto Scaling Groups
+- **ECS Application Auto Scaling** on the **server** service (CPU target ~60%)
+- Raise capacity via Terraform vars: `server_min_count`, `server_max_count`, `server_desired_count`
+- Or quick CLI: `aws ecs update-service --desired-count N ...`
+
+**Limit:** SQLite on EFS is fine early; for very large concurrency, plan **RDS PostgreSQL**, Redis, and async AI queues.
+
+---
+
+## 8. Disaster recovery (current honesty)
+
+| Present | Not yet |
+|---------|---------|
+| Multi-AZ subnets / ALB / EFS mounts | Multi-region failover |
+| Terraform rebuild path | Automated backup/restore runbooks |
+| Secrets in Secrets Manager | Full DR drills |
+
+DR is **basic**. Next steps would be RDS multi-AZ backups, documented RTO/RPO, and optional secondary region.
+
+---
+
+## 9. How to operate day-to-day
+
+### Deploy app (dev)
+
+Push to `main` (changes under `client/`, `server/`, or `docker/`) — Actions builds and deploys.
+
+Or: **Actions → Deploy Dev (ECS) → Run workflow**.
+
+### Promote to staging
+
+**Actions → Deploy Staging → Run workflow** (optionally pass git SHA tested on dev).
+
+### Production (when ready)
+
+1. `terraform apply` under `infra/environments/prod`
+2. Create GitHub Environment `production` with required reviewers
+3. **Actions → Deploy Production** with `git_ref` + `confirm=deploy-prod`
+
+### Terraform (infra change)
+
+```powershell
+cd infra\environments\dev   # or staging / prod
+terraform plan
+terraform apply
 ```
 
-Edit `server/.env`:
+Never commit `*.tfvars` with secrets (gitignored).
 
-```env
-OPENAI_API_KEY=sk-your-actual-openai-key-here
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/ai-doubt-solver
-PORT=5000
-```
+### Local app run
 
-> **MongoDB Atlas (free tier):**
-> 1. Go to [mongodb.com/atlas](https://www.mongodb.com/atlas)
-> 2. Create a free cluster
-> 3. Click Connect → Drivers → copy the connection string
-> 4. Replace `<password>` with your DB user password
->
-> **Local MongoDB:**
-> ```env
-> MONGO_URI=mongodb://localhost:27017/ai-doubt-solver
-> ```
-> MongoDB is **optional** — the app works without it, just without history.
-
-### 3. Install all dependencies
-
-```bash
-# From the root folder:
+```powershell
 npm run install:all
-
-# Or manually:
-npm install
-cd server && npm install
-cd ../client && npm install
-```
-
----
-
-## ▶️ Running Locally
-
-### Option A — Run both together (recommended)
-
-```bash
-# From root:
+# server/.env with OPENAI_API_KEY / Groq settings
 npm run dev
 ```
 
-This starts:
-- Backend at `http://localhost:5000`
-- Frontend at `http://localhost:5173`
+---
 
-### Option B — Run separately
+## 10. Important fixes along the way
 
-**Terminal 1 (backend):**
-```bash
-cd server
-npm run dev
-```
-
-**Terminal 2 (frontend):**
-```bash
-cd client
-npm run dev
-```
-
-Then open: **[http://localhost:5173](http://localhost:5173)**
+1. **API key naming** — App expects `OPENAI_API_KEY`, not `GROQ_API_KEY`. ECS maps the Groq secret correctly with Groq base URL.
+2. **CI credentials** — First Actions failure was missing GitHub AWS secrets; fixed after secrets were added; deploy then succeeded.
+3. **Same-repo infra** — Terraform/Docker added beside `client/` and `server/` without rewriting the core product logic (CORS env support was a small additive change).
 
 ---
 
-## 🔌 API Endpoints
+## 11. Suggested next steps
 
-| Method | Route                         | Description              |
-|--------|-------------------------------|--------------------------|
-| GET    | `/api/health`                 | Server health check      |
-| POST   | `/api/ask`                    | Ask AI a question        |
-| GET    | `/api/ask/history/:sessionId` | Load conversation history|
-| POST   | `/api/upload`                 | Upload & extract PDF text|
-| POST   | `/api/notes`                  | Generate notes from text |
-| GET    | `/api/notes/history/:session` | Load notes history       |
-| POST   | `/api/quiz`                   | Generate MCQ quiz        |
-| POST   | `/api/quiz/result`            | Save quiz score          |
-| GET    | `/api/quiz/history/:session`  | Load quiz history        |
-| GET    | `/api/history/:sessionId`     | All history aggregated   |
+1. Raise/adjust budgets after a full month of Cost Explorer data  
+2. Rotate Groq API key if it was ever pasted in chat  
+3. Change Grafana admin password  
+4. Enable GitHub `production` environment approvals  
+5. Apply **prod** when ready; keep promote-only deploys  
+6. Before large user growth: RDS, Redis, ALB request-based autoscaling, CloudFront  
+7. Deepen frontend polish on Notes/Quiz pages to match Home  
 
 ---
 
-## 🌟 Features
+## 12. Document map
 
-- ✅ AI-powered chat with GPT-3.5 (full conversation context)
-- ✅ PDF upload with text extraction (up to 10MB)
-- ✅ AI-structured notes in markdown (headings + bullets)
-- ✅ Download notes as `.txt` file
-- ✅ Interactive MCQ quiz with 4 options per question
-- ✅ Live countdown timer per quiz
-- ✅ Score breakdown with explanations
-- ✅ Dark/light mode toggle
-- ✅ Per-device session ID (localStorage)
-- ✅ MongoDB history (gracefully optional)
-- ✅ Responsive design (mobile-friendly)
+| File | Contents |
+|------|----------|
+| `infra/README.md` | Terraform layout & deploy steps |
+| `.github/CI-CD.md` | Pipeline & secrets |
+| `infra/MONITORING.md` | Prometheus/Grafana build notes |
+| **This document** | End-to-end project story |
 
 ---
 
-## 🐞 Troubleshooting
+## 13. Summary
 
-| Problem | Fix |
-|---------|-----|
-| `OPENAI_API_KEY not set` | Add key to `server/.env` |
-| `Cannot connect to server` | Start backend with `cd server && npm run dev` |
-| `Invalid PDF` | Ensure file is not password-protected or image-only |
-| MongoDB errors | Check `MONGO_URI` or leave blank to run without DB |
-| Port 5000 in use | Change `PORT=5001` in `.env` and update `vite.config.js` proxy |
+We took an existing AI study app and turned it into a **cloud-ready product platform**: Terraform-managed ECS on AWS, multi-environment promotion, working CI/CD, cost alerts, staging observability with Grafana, and a distinctive 3D frontend. Production remains intentionally gated so nothing ships to customers without staging validation and human confirmation.
 
----
-
-## 📜 License
-
-MIT — free to use and modify.
