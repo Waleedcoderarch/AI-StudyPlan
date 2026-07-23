@@ -1,0 +1,608 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification for AI Doubt Solver & Notes Generator
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: chat
+    description: AI doubt solver chat operations
+  - name: notes
+    description: PDF notes generation operations
+  - name: quiz
+    description: Quiz generation and management
+  - name: history
+    description: History and statistics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /chat/conversations:
+    get:
+      operationId: listConversations
+      tags: [chat]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [chat]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConversationBody"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /chat/conversations/{id}:
+    get:
+      operationId: getConversation
+      tags: [chat]
+      summary: Get a conversation with all its messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationWithMessages"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteConversation
+      tags: [chat]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /chat/conversations/{id}/messages:
+    post:
+      operationId: sendMessage
+      tags: [chat]
+      summary: Send a message and get an AI response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "200":
+          description: AI response message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /notes/upload:
+    post:
+      operationId: uploadPdf
+      tags: [notes]
+      summary: Upload a PDF and extract its text
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadPdfBody"
+      responses:
+        "200":
+          description: Extracted text and metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfUploadResult"
+
+  /notes/generate:
+    post:
+      operationId: generateNotes
+      tags: [notes]
+      summary: Generate structured notes from text content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateNotesBody"
+      responses:
+        "200":
+          description: Generated notes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotesResult"
+
+  /notes/history:
+    get:
+      operationId: listNotesHistory
+      tags: [notes]
+      summary: List all saved notes
+      responses:
+        "200":
+          description: List of saved notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedNote"
+
+  /notes/{id}:
+    get:
+      operationId: getSavedNote
+      tags: [notes]
+      summary: Get a specific saved note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Saved note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedNote"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteSavedNote
+      tags: [notes]
+      summary: Delete a saved note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /quiz/generate:
+    post:
+      operationId: generateQuiz
+      tags: [quiz]
+      summary: Generate a quiz from topic or content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateQuizBody"
+      responses:
+        "200":
+          description: Generated quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quiz/history:
+    get:
+      operationId: listQuizHistory
+      tags: [quiz]
+      summary: List all saved quizzes
+      responses:
+        "200":
+          description: List of saved quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuizSummary"
+
+  /quiz/{id}:
+    get:
+      operationId: getQuiz
+      tags: [quiz]
+      summary: Get a specific quiz
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz with questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "404":
+          description: Not found
+
+  /quiz/{id}/submit:
+    post:
+      operationId: submitQuizResult
+      tags: [quiz]
+      summary: Submit quiz answers and get score
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitQuizBody"
+      responses:
+        "200":
+          description: Quiz result with score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizResult"
+
+  /stats/overview:
+    get:
+      operationId: getStatsOverview
+      tags: [history]
+      summary: Get app usage statistics overview
+      responses:
+        "200":
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsOverview"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    UploadPdfBody:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+        - file
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        messageCount:
+          type: integer
+      required:
+        - id
+        - title
+        - createdAt
+        - updatedAt
+        - messageCount
+
+    CreateConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+
+    ConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+      required:
+        - id
+        - title
+        - createdAt
+        - updatedAt
+        - messages
+
+    SendMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    PdfUploadResult:
+      type: object
+      properties:
+        text:
+          type: string
+        filename:
+          type: string
+        pageCount:
+          type: integer
+        wordCount:
+          type: integer
+      required:
+        - text
+        - filename
+        - pageCount
+        - wordCount
+
+    GenerateNotesBody:
+      type: object
+      properties:
+        content:
+          type: string
+        title:
+          type: string
+        source:
+          type: string
+      required:
+        - content
+        - title
+
+    NotesResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        notes:
+          type: string
+        source:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - notes
+        - createdAt
+
+    SavedNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        notes:
+          type: string
+        source:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - notes
+        - createdAt
+
+    GenerateQuizBody:
+      type: object
+      properties:
+        topic:
+          type: string
+        content:
+          type: ["string", "null"]
+        questionCount:
+          type: integer
+      required:
+        - topic
+        - questionCount
+
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: integer
+        explanation:
+          type: string
+      required:
+        - id
+        - question
+        - options
+        - correctAnswer
+        - explanation
+
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+        createdAt:
+          type: string
+      required:
+        - id
+        - topic
+        - questions
+        - createdAt
+
+    QuizSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        questionCount:
+          type: integer
+        bestScore:
+          type: ["integer", "null"]
+        attempts:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - topic
+        - questionCount
+        - attempts
+        - createdAt
+
+    SubmitQuizBody:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            type: integer
+        timeTaken:
+          type: integer
+      required:
+        - answers
+
+    QuizResult:
+      type: object
+      properties:
+        quizId:
+          type: integer
+        score:
+          type: integer
+        totalQuestions:
+          type: integer
+        percentage:
+          type: number
+        timeTaken:
+          type: ["integer", "null"]
+        answers:
+          type: array
+          items:
+            type: integer
+        correctAnswers:
+          type: array
+          items:
+            type: integer
+      required:
+        - quizId
+        - score
+        - totalQuestions
+        - percentage
+        - answers
+        - correctAnswers
+
+    StatsOverview:
+      type: object
+      properties:
+        totalConversations:
+          type: integer
+        totalMessages:
+          type: integer
+        totalNotes:
+          type: integer
+        totalQuizzes:
+          type: integer
+        averageQuizScore:
+          type: ["number", "null"]
+      required:
+        - totalConversations
+        - totalMessages
+        - totalNotes
+        - totalQuizzes

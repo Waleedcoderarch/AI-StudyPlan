@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "AI Doubt Solver & Notes Generator"
+version = "1.0.0"
+id = "artifacts/ai-doubt-solver"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21407
+
+[services.development]
+run = "pnpm --filter @workspace/ai-doubt-solver run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ai-doubt-solver", "run", "build" ]
+publicDir = "artifacts/ai-doubt-solver/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21407"
+BASE_PATH = "/"
