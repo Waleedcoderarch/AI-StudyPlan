@@ -1,0 +1,50 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: "Git commit SHA already verified on STAGING (required)"
+        required: true
+        type: string
+      confirm:
+        description: "Type deploy-prod to confirm"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Confirm production deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require confirm phrase
+        if: ${{ github.event.inputs.confirm != 'deploy-prod' }}
+        run: |
+          echo "Confirmation failed. Type exactly: deploy-prod"
+          exit 1
+      - name: Require git_ref
+        if: ${{ github.event.inputs.git_ref == '' }}
+        run: |
+          echo "git_ref (staging-tested SHA) is required"
+          exit 1
+
+  deploy:
+    needs: validate
+    uses: ./.github/workflows/reusable-ecs-deploy.yml
+    with:
+      environment_name: production
+      aws_region: us-east-1
+      ecr_server: 588681235213.dkr.ecr.us-east-1.amazonaws.com/ai-studyplan-prod-server
+      ecr_client: 588681235213.dkr.ecr.us-east-1.amazonaws.com/ai-studyplan-prod-client
+      ecs_cluster: ai-studyplan-prod-cluster
+      ecs_server_service: ai-studyplan-prod-server
+      ecs_client_service: ai-studyplan-prod-client
+      alb_url: ${{ vars.PROD_ALB_URL }}
+      git_ref: ${{ github.event.inputs.git_ref }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -25,8 +25,9 @@ Internet → ALB → ECS client (nginx)
 infra/
   modules/          # vpc, ecr, alb, efs, ecs, cost_alerts
   environments/
-    dev/            # small / cheap
-    prod/           # larger + autoscaling up to 10 tasks
+    dev/            # small / cheap (auto CI)
+    staging/        # pre-prod test before production
+    prod/           # larger + autoscaling (manual promote only)
 docker/
   server/Dockerfile
   client/Dockerfile

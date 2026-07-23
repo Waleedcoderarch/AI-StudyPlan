@@ -1,0 +1,21 @@
+aws_region   = "us-east-1"
+project_name = "ai-studyplan"
+environment  = "staging"
+vpc_cidr     = "10.30.0.0/16"
+image_tag    = "latest"
+
+# Set via terraform.tfvars (gitignored) or TF_VAR_*
+# alert_email  = "you@example.com"
+# groq_api_key = "gsk_..."
+
+monthly_budget_usd          = "50"
+billing_alarm_threshold_usd = 40
+
+server_cpu           = 256
+server_memory        = 512
+client_cpu           = 256
+client_memory        = 512
+server_desired_count = 1
+client_desired_count = 1
+server_min_count     = 1
+server_max_count     = 4

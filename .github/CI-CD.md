@@ -1,51 +1,77 @@
-# CI/CD
-
-GitHub Actions deploys **dev** automatically when you push app/docker changes to `main`.
-
-## What happens on push
+# CI/CD — Dev → Staging → Production
 
 ```text
-git push → GitHub Actions
-  → build Docker images
-  → push to ECR
-  → force new ECS deployment
-  → wait until stable
-  → health check
-  → optional SNS email notification
+feature branch
+    ↓
+PR checks + terraform plan (infra changes)
+    ↓
+merge to main ──────────────► auto deploy DEV
+    ↓
+promote (manual / staging branch) ► deploy STAGING  (test here)
+    ↓
+manual approval + confirm   ► deploy PROD
 ```
 
-Workflows:
-- `.github/workflows/deploy-dev.yml` — build + deploy (on push to `main`)
-- `.github/workflows/terraform-plan.yml` — `terraform plan` on PRs that touch `infra/`
+Nothing goes to **prod** automatically.
 
-## One-time setup (GitHub secrets)
+## Workflows
 
-Repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
+| Workflow | Trigger | Environment |
+|----------|---------|-------------|
+| `deploy-dev.yml` | Push to `main` | Dev (auto) |
+| `deploy-staging.yml` | Push to `staging` branch **or** Actions → Run workflow | Staging |
+| `deploy-prod.yml` | Actions → Run workflow only (type `deploy-prod`) | Production (approval) |
+| `terraform-plan.yml` | PRs touching `infra/` | Plan only |
+| `reusable-ecs-deploy.yml` | Called by other workflows | Shared build/deploy |
 
-| Secret | Value |
-|--------|--------|
-| `AWS_ACCESS_KEY_ID` | IAM access key (same user used for Terraform, or a deploy-only user) |
-| `AWS_SECRET_ACCESS_KEY` | Matching secret key |
-| `GROQ_API_KEY` | Groq key (for Terraform plan workflow only) |
-| `ALERT_EMAIL` | e.g. `waleedahmed22005@gmail.com` |
+## How developers promote a release
 
-Optional (Variables, not secrets):
+1. Merge to `main` → wait for **DEV** Actions to go green  
+2. Note the commit SHA (e.g. `bf27c92`)  
+3. **Actions → Deploy Staging → Run workflow** (optional: paste that SHA)  
+4. Test on the staging ALB URL  
+5. Only when staging looks good: **Actions → Deploy Production → Run workflow**  
+   - `git_ref` = same SHA tested on staging  
+   - `confirm` = `deploy-prod`  
+6. Approve the GitHub **production** environment if protection rules are enabled  
 
-| Variable | Value |
-|----------|--------|
-| `DEPLOY_SNS_TOPIC_ARN` | SNS topic ARN for deploy emails (from AWS console / Terraform cost alerts topic) |
+## One-time GitHub setup
 
-## GitHub notifications for developers
+### Secrets (Settings → Secrets and variables → Actions)
 
-1. GitHub → **Settings** → **Notifications** → enable **Actions**
-2. Or watch the repo → **Custom** → **Actions**
-3. Failed/successful runs also show on the **Actions** tab
-4. If `DEPLOY_SNS_TOPIC_ARN` is set, email is sent via SNS (confirm the subscription)
+| Secret | Purpose |
+|--------|---------|
+| `AWS_ACCESS_KEY_ID` | Deploy credentials |
+| `AWS_SECRET_ACCESS_KEY` | Deploy credentials |
+| `GROQ_API_KEY` | Terraform plan |
+| `ALERT_EMAIL` | Terraform plan / budgets |
 
-## Manual run
+### Variables
 
-Actions → **Deploy Dev (ECS)** → **Run workflow**
+| Variable | Purpose |
+|----------|---------|
+| `STAGING_ALB_URL` | `http://ai-studyplan-staging-alb-524443134.us-east-1.elb.amazonaws.com` |
+| `PROD_ALB_URL` | Prod app URL (set after prod Terraform apply) |
+| `DEPLOY_SNS_TOPIC_ARN` | Optional deploy email topic |
 
-## IAM tip
+### Environments (Settings → Environments)
 
-Prefer a dedicated IAM user/role with least privilege: ECR push, ECS update/describe, CloudWatch logs read, SNS publish. Do not commit keys into the repo.
+Create:
+
+1. **`staging`** — optional reviewers  
+2. **`production`** — **required reviewers** (so prod cannot deploy without a human)
+
+## Terraform environments
+
+```text
+infra/environments/
+  dev/       # live
+  staging/   # pre-prod test
+  prod/      # production (apply when ready)
+```
+
+## Notifications
+
+- GitHub Actions status (enable Actions notifications)  
+- Optional SNS email if `DEPLOY_SNS_TOPIC_ARN` is set  
+- Staging/prod budget alerts from Terraform `cost_alerts` module  

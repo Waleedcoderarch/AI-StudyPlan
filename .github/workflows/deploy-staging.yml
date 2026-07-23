@@ -1,0 +1,37 @@
+name: Deploy Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: "Git commit SHA or tag already tested in DEV (leave empty for current main tip)"
+        required: false
+        default: ""
+  push:
+    branches: [staging]
+    paths:
+      - "client/**"
+      - "server/**"
+      - "docker/**"
+      - ".github/workflows/deploy-staging.yml"
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusable-ecs-deploy.yml
+    with:
+      environment_name: staging
+      aws_region: us-east-1
+      ecr_server: 588681235213.dkr.ecr.us-east-1.amazonaws.com/ai-studyplan-staging-server
+      ecr_client: 588681235213.dkr.ecr.us-east-1.amazonaws.com/ai-studyplan-staging-client
+      ecs_cluster: ai-studyplan-staging-cluster
+      ecs_server_service: ai-studyplan-staging-server
+      ecs_client_service: ai-studyplan-staging-client
+      alb_url: http://ai-studyplan-staging-alb-524443134.us-east-1.elb.amazonaws.com
+      git_ref: ${{ github.event.inputs.git_ref || '' }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -1,0 +1,119 @@
+name: Reusable ECS deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment_name:
+        description: GitHub Environment name (dev, staging, production)
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      ecr_server:
+        required: true
+        type: string
+      ecr_client:
+        required: true
+        type: string
+      ecs_cluster:
+        required: true
+        type: string
+      ecs_server_service:
+        required: true
+        type: string
+      ecs_client_service:
+        required: true
+        type: string
+      alb_url:
+        required: true
+        type: string
+      git_ref:
+        description: Git ref/SHA to deploy
+        required: false
+        type: string
+        default: ""
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+
+jobs:
+  deploy:
+    name: Build and deploy (${{ inputs.environment_name }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment_name }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref != '' && inputs.git_ref || github.sha }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: |
+          REF="${{ inputs.git_ref != '' && inputs.git_ref || github.sha }}"
+          echo "tag=${REF:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push server image
+        run: |
+          docker build --platform linux/amd64 \
+            -f docker/server/Dockerfile \
+            -t "${{ inputs.ecr_server }}:${{ steps.meta.outputs.tag }}" \
+            -t "${{ inputs.ecr_server }}:latest" .
+          docker push "${{ inputs.ecr_server }}:${{ steps.meta.outputs.tag }}"
+          docker push "${{ inputs.ecr_server }}:latest"
+
+      - name: Build & push client image
+        run: |
+          docker build --platform linux/amd64 \
+            -f docker/client/Dockerfile \
+            -t "${{ inputs.ecr_client }}:${{ steps.meta.outputs.tag }}" \
+            -t "${{ inputs.ecr_client }}:latest" .
+          docker push "${{ inputs.ecr_client }}:${{ steps.meta.outputs.tag }}"
+          docker push "${{ inputs.ecr_client }}:latest"
+
+      - name: Deploy ECS services
+        run: |
+          aws ecs update-service \
+            --cluster "${{ inputs.ecs_cluster }}" \
+            --service "${{ inputs.ecs_server_service }}" \
+            --force-new-deployment \
+            --region "${{ inputs.aws_region }}"
+          aws ecs update-service \
+            --cluster "${{ inputs.ecs_cluster }}" \
+            --service "${{ inputs.ecs_client_service }}" \
+            --force-new-deployment \
+            --region "${{ inputs.aws_region }}"
+
+      - name: Wait for services stable
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${{ inputs.ecs_cluster }}" \
+            --services "${{ inputs.ecs_server_service }}" "${{ inputs.ecs_client_service }}" \
+            --region "${{ inputs.aws_region }}"
+
+      - name: Health check
+        run: |
+          curl -fsS "${{ inputs.alb_url }}/api/health"
+          curl -fsS -o /dev/null -w "%{http_code}\n" "${{ inputs.alb_url }}/"
+
+      - name: Summary
+        run: |
+          echo "### Deployed to ${{ inputs.environment_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image tag: \`${{ steps.meta.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: ${{ inputs.alb_url }}" >> "$GITHUB_STEP_SUMMARY"

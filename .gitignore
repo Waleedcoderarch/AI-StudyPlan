@@ -20,3 +20,5 @@ uploads/
 .terraformrc
 terraform.rc
 *.pem
+**/tfplan
+**/*.tfplan
